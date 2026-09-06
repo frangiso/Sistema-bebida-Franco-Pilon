@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth";
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, setDoc, updateDoc } from "firebase/firestore";
 import { auth, authSecundario, db } from "../../firebase.js";
+import { colors, boton, input, card } from "../../theme.js";
 
 const ROLES = ["bartender", "cajero"];
-
-const inputStyle = { padding: 8, fontSize: 14, background: "#222", border: "1px solid #444", borderRadius: 6, color: "#fff" };
 const vacio = { nombre: "", email: "", password: "", rol: ROLES[0] };
 
 export default function PanelStaff({ adminUid }) {
@@ -73,60 +72,93 @@ export default function PanelStaff({ adminUid }) {
 
   return (
     <div>
-      <form onSubmit={agregarUsuario} style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-        <input placeholder="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} style={inputStyle} />
-        <input
-          placeholder="Email"
-          type="email"
-          value={nuevo.email}
-          onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })}
-          style={inputStyle}
-        />
-        <input
-          placeholder="Contraseña"
-          type="password"
-          value={nuevo.password}
-          onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })}
-          style={inputStyle}
-        />
-        <select value={nuevo.rol} onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })} style={inputStyle}>
-          {ROLES.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-        <button type="submit" disabled={guardando} style={{ padding: "8px 16px", background: "#2d7", border: "none", borderRadius: 6, color: "#fff" }}>
-          {guardando ? "Creando..." : "Crear"}
-        </button>
-      </form>
-      {error && <p style={{ color: "#f66", marginBottom: 16 }}>{error}</p>}
-
-      {usuarios.map((u) => (
-        <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: 8, borderBottom: "1px solid #2a2a2a" }}>
-          <span style={{ flex: 1, opacity: u.activo ? 1 : 0.4 }}>
-            {u.nombre} <span style={{ color: "#888", fontSize: 12 }}>{u.email} — {u.rol}</span>
-          </span>
-          {u.rol !== "admin" && (
-            <>
-              <button
-                onClick={() => toggleActivo(u.id, u.activo)}
-                style={{ padding: "6px 10px", background: u.activo ? "#2d7" : "#555", border: "none", borderRadius: 6, color: "#fff" }}
-              >
-                {u.activo ? "Activo" : "Inactivo"}
-              </button>
-              <button onClick={() => restablecerContrasena(u.email)} style={{ padding: "6px 10px", background: "#448", border: "none", borderRadius: 6, color: "#fff" }}>
-                Restablecer contraseña
-              </button>
-            </>
-          )}
-          {u.id !== adminUid && (
-            <button onClick={() => eliminar(u.id, u.nombre)} style={{ padding: "6px 10px", background: "#a33", border: "none", borderRadius: 6, color: "#fff" }}>
-              Eliminar
-            </button>
-          )}
+      <form onSubmit={agregarUsuario} style={card({ padding: 18, marginBottom: 20 })}>
+        <p style={{ fontSize: 12, color: colors.textMuted, fontWeight: 700, textTransform: "uppercase", marginBottom: 12 }}>
+          Nueva cuenta de staff
+        </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input
+            placeholder="Nombre"
+            value={nuevo.nombre}
+            onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
+            style={input({ flex: "1 1 160px", width: "auto" })}
+          />
+          <input
+            placeholder="Email"
+            type="email"
+            value={nuevo.email}
+            onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })}
+            style={input({ flex: "1 1 200px", width: "auto" })}
+          />
+          <input
+            placeholder="Contraseña"
+            type="password"
+            value={nuevo.password}
+            onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })}
+            style={input({ flex: "1 1 160px", width: "auto" })}
+          />
+          <select
+            value={nuevo.rol}
+            onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })}
+            style={input({ flex: "1 1 130px", width: "auto" })}
+          >
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+          <button type="submit" disabled={guardando} style={boton(guardando ? "disabled" : "primary", { flex: "1 1 120px" })}>
+            {guardando ? "Creando..." : "Crear"}
+          </button>
         </div>
-      ))}
+        {error && <p style={{ color: colors.danger, marginTop: 12, fontSize: 13 }}>{error}</p>}
+      </form>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {usuarios.map((u) => (
+          <div
+            key={u.id}
+            style={card({
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "12px 16px",
+              flexWrap: "wrap",
+              opacity: u.activo ? 1 : 0.5,
+            })}
+          >
+            <span style={{ flex: "1 1 200px" }}>
+              <div style={{ fontWeight: 700 }}>{u.nombre}</div>
+              <div style={{ color: colors.textMuted, fontSize: 12 }}>
+                {u.email} — {u.rol}
+              </div>
+            </span>
+            {u.rol !== "admin" && (
+              <>
+                <button
+                  onClick={() => toggleActivo(u.id, u.activo)}
+                  style={boton(u.activo ? "success" : "secondary", { padding: "8px 14px", fontSize: 13 })}
+                >
+                  {u.activo ? "Activo" : "Inactivo"}
+                </button>
+                <button
+                  onClick={() => restablecerContrasena(u.email)}
+                  style={boton("secondary", { padding: "8px 14px", fontSize: 13 })}
+                >
+                  Restablecer contraseña
+                </button>
+              </>
+            )}
+            {u.id !== adminUid && (
+              <button onClick={() => eliminar(u.id, u.nombre)} style={boton("danger", { padding: "8px 14px", fontSize: 13 })}>
+                Eliminar
+              </button>
+            )}
+          </div>
+        ))}
+        {usuarios.length === 0 && <p style={{ color: colors.textFaint, fontSize: 14 }}>Todavía no hay usuarios cargados.</p>}
+      </div>
     </div>
   );
 }

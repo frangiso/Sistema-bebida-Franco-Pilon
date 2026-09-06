@@ -4,6 +4,8 @@ import { asegurarSesionCliente } from "../firebase.js";
 import { crearPedido, iniciarPagoMercadoPago } from "../lib/callables.js";
 import Catalogo from "./cliente/Catalogo.jsx";
 import PantallaCodigo from "./cliente/PantallaCodigo.jsx";
+import Bienvenida from "./cliente/Bienvenida.jsx";
+import { colors, pageContainer } from "../theme.js";
 
 const STORAGE_KEY = "pedidoActivo";
 
@@ -12,6 +14,7 @@ export default function ClientePage() {
   const navigate = useNavigate();
   const [sesionLista, setSesionLista] = useState(false);
   const [pedidoId, setPedidoId] = useState(pedidoIdUrl || null);
+  const [modo, setModo] = useState("inicio"); // "inicio" | "pedir"
   const [enviando, setEnviando] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState(null);
   // Se genera una sola vez por intento de pedido: si crearPedido se llama de
@@ -63,17 +66,21 @@ export default function ClientePage() {
   }
 
   if (!sesionLista) {
-    return <div style={{ padding: 24, color: "#aaa" }}>Iniciando sesión...</div>;
+    return <div style={pageContainer({ color: colors.textMuted })}>Iniciando sesión...</div>;
   }
 
   if (pedidoId) {
     return <PantallaCodigo pedidoId={pedidoId} alPedirOtro={pedirOtro} />;
   }
 
+  if (modo === "inicio") {
+    return <Bienvenida onPedir={() => setModo("pedir")} />;
+  }
+
   return (
     <div>
       <Catalogo onConfirmar={confirmarPedido} enviando={enviando} />
-      {errorEnvio && <p style={{ color: "#f66", padding: "0 24px" }}>{errorEnvio}</p>}
+      {errorEnvio && <p style={{ color: colors.danger, padding: "0 20px" }}>{errorEnvio}</p>}
     </div>
   );
 }

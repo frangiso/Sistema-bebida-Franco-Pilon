@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
+import { boton, card } from "../theme.js";
 
 const CONTENEDOR_ID = "lector-qr";
 
@@ -22,12 +23,9 @@ export default function EscanerQR({ onResultado, onCerrar }) {
   }, []);
 
   return (
-    <div style={{ marginTop: 12 }}>
+    <div style={card({ marginTop: 12, padding: 12 })}>
       <div id={CONTENEDOR_ID} />
-      <button
-        onClick={onCerrar}
-        style={{ marginTop: 8, background: "none", border: "1px solid #444", color: "#fff", padding: 8, borderRadius: 8 }}
-      >
+      <button onClick={onCerrar} style={boton("secondary", { marginTop: 8, width: "100%" })}>
         Cerrar cámara
       </button>
     </div>

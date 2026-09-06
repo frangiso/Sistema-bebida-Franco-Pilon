@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { collection, doc, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "../../firebase.js";
+import { colors, radius, card } from "../../theme.js";
 
 const ESTADO_COLOR = {
-  pendientePago: "#888",
-  pendienteRetiro: "#2d7",
-  demorado: "#f90",
-  entregado: "#4af",
-  cancelado: "#f66",
+  pendientePago: colors.textMuted,
+  pendienteRetiro: colors.success,
+  demorado: colors.warning,
+  entregado: colors.info,
+  cancelado: colors.danger,
 };
 
 export default function PanelVivo() {
@@ -33,26 +34,45 @@ export default function PanelVivo() {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
-        <div style={{ background: "#1a1a1a", padding: 16, borderRadius: 12, flex: 1 }}>
-          <p style={{ color: "#888", fontSize: 13 }}>Facturado hoy</p>
-          <p style={{ fontSize: 28, fontWeight: 700 }}>${ventasHoy?.totalFacturado ?? "..."}</p>
+      <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
+        <div style={card({ padding: 18, flex: "1 1 160px" })}>
+          <p style={{ color: colors.textMuted, fontSize: 13 }}>Facturado hoy</p>
+          <p style={{ fontSize: 30, fontWeight: 800, color: colors.accentAlt }}>${ventasHoy?.totalFacturado ?? "..."}</p>
         </div>
-        <div style={{ background: "#1a1a1a", padding: 16, borderRadius: 12, flex: 1 }}>
-          <p style={{ color: "#888", fontSize: 13 }}>Pedidos hoy</p>
-          <p style={{ fontSize: 28, fontWeight: 700 }}>{ventasHoy?.cantidadPedidos ?? "..."}</p>
+        <div style={card({ padding: 18, flex: "1 1 160px" })}>
+          <p style={{ color: colors.textMuted, fontSize: 13 }}>Pedidos hoy</p>
+          <p style={{ fontSize: 30, fontWeight: 800 }}>{ventasHoy?.cantidadPedidos ?? "..."}</p>
         </div>
       </div>
 
-      <h2 style={{ fontSize: 14, color: "#888" }}>Últimas 24hs ({pedidos.length})</h2>
-      {pedidos.map((p) => (
-        <div key={p.id} style={{ display: "flex", justifyContent: "space-between", padding: 10, borderBottom: "1px solid #2a2a2a" }}>
-          <span>
-            <strong>{p.codigoNumerico}</strong> — ${p.montoTotal} ({p.metodoPago})
-          </span>
-          <span style={{ color: ESTADO_COLOR[p.estado] ?? "#fff" }}>{p.estado}</span>
-        </div>
-      ))}
+      <h2 style={{ fontSize: 12, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
+        Últimas 24hs ({pedidos.length})
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {pedidos.map((p) => (
+          <div key={p.id} style={card({ display: "flex", justifyContent: "space-between", padding: "12px 16px", flexWrap: "wrap", gap: 8 })}>
+            <span>
+              <strong>{p.codigoNumerico}</strong>{" "}
+              <span style={{ color: colors.textMuted }}>
+                — ${p.montoTotal} ({p.metodoPago})
+              </span>
+            </span>
+            <span
+              style={{
+                color: ESTADO_COLOR[p.estado] ?? colors.text,
+                fontWeight: 700,
+                fontSize: 13,
+                background: "rgba(255,255,255,0.05)",
+                padding: "3px 10px",
+                borderRadius: radius.pill,
+              }}
+            >
+              {p.estado}
+            </span>
+          </div>
+        ))}
+        {pedidos.length === 0 && <p style={{ color: colors.textFaint, fontSize: 14 }}>Sin pedidos en las últimas 24hs.</p>}
+      </div>
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { db } from "../firebase.js";
 import { useStaffSesion } from "../lib/staffAuth.js";
 import { confirmarPagoEfectivo } from "../lib/callables.js";
 import LoginEmail from "../components/LoginEmail.jsx";
+import AppHeader from "../components/AppHeader.jsx";
+import { colors, radius, boton, card, pageContainer } from "../theme.js";
 
 export default function CajeroPage() {
   const { usuario, cargando, error, login, logout } = useStaffSesion("cajero");
@@ -40,36 +42,37 @@ export default function CajeroPage() {
     }
   }
 
-  if (cargando) return <div style={{ padding: 24, color: "#aaa" }}>Cargando...</div>;
-  if (!usuario) return <LoginEmail titulo="Caja" onLogin={login} error={error} />;
+  if (cargando) return <div style={pageContainer({ color: colors.textMuted })}>Cargando...</div>;
+  if (!usuario) return <LoginEmail titulo="Caja" subtitulo="Pagos en efectivo" onLogin={login} error={error} />;
 
   if (seleccionado) {
     return (
-      <div style={{ padding: 24 }}>
-        <h1 style={{ fontSize: 20 }}>Confirmar cobro</h1>
-        <div style={{ background: "#1a1a1a", padding: 16, borderRadius: 12, marginTop: 16 }}>
+      <div style={pageContainer()}>
+        <h1 style={{ fontSize: 20, fontWeight: 800 }}>Confirmar cobro</h1>
+        <div style={card({ padding: 20, marginTop: 16 })}>
           {seleccionado.items.map((item) => (
-            <p key={item.productoId} style={{ fontSize: 18 }}>
+            <p key={item.productoId} style={{ fontSize: 17, fontWeight: 600, margin: "6px 0" }}>
               {item.cantidad}x {item.nombre}
             </p>
           ))}
-          <p style={{ fontSize: 32, fontWeight: 700, marginTop: 12 }}>${seleccionado.montoTotal}</p>
-          <p style={{ color: "#888", marginTop: 8 }}>Código: {seleccionado.codigoNumerico}</p>
+          <p style={{ fontSize: 34, fontWeight: 800, marginTop: 12, color: colors.accentAlt }}>${seleccionado.montoTotal}</p>
+          <p style={{ color: colors.textMuted, marginTop: 6 }}>Código: {seleccionado.codigoNumerico}</p>
         </div>
-        {errorAccion && <p style={{ color: "#f66" }}>{errorAccion}</p>}
-        <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <button
-            onClick={() => setSeleccionado(null)}
-            style={{ flex: 1, padding: 14, borderRadius: 8, background: "#333", color: "#fff", border: "none" }}
-          >
+        {errorAccion && (
+          <p style={{ color: colors.danger, background: colors.dangerBg, padding: 12, borderRadius: radius.sm, marginTop: 12 }}>
+            {errorAccion}
+          </p>
+        )}
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button onClick={() => setSeleccionado(null)} style={boton("secondary", { flex: 1, padding: 16 })}>
             Cancelar
           </button>
           <button
             disabled={confirmando}
             onClick={confirmarCobro}
-            style={{ flex: 1, padding: 14, borderRadius: 8, background: confirmando ? "#333" : "#2d7", color: "#fff", border: "none" }}
+            style={boton(confirmando ? "disabled" : "success", { flex: 1, padding: 16, fontSize: 16 })}
           >
-            {confirmando ? "Confirmando..." : "Ya cobré, confirmar"}
+            {confirmando ? "Confirmando..." : "✓ Ya cobré"}
           </button>
         </div>
       </div>
@@ -77,20 +80,31 @@ export default function CajeroPage() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: 20 }}>Caja - Pagos en efectivo</h1>
-        <button onClick={logout} style={{ background: "none", border: "none", color: "#888" }}>
-          Salir
-        </button>
-      </div>
+    <div style={pageContainer({ maxWidth: 560 })}>
+      <AppHeader titulo="💵 Caja" subtitulo={usuario.nombre} onLogout={logout} />
 
-      <h2 style={{ fontSize: 14, color: "#888", marginTop: 24 }}>Esperando cobro ({pedidos.length})</h2>
-      {pedidos.map((p) => (
-        <div key={p.id} onClick={() => setSeleccionado(p)} style={{ padding: 12, borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
-          <strong>{p.codigoNumerico}</strong> — ${p.montoTotal}
-        </div>
-      ))}
+      <h2 style={{ fontSize: 12, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
+        Esperando cobro ({pedidos.length})
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {pedidos.map((p) => (
+          <div
+            key={p.id}
+            onClick={() => setSeleccionado(p)}
+            style={card({
+              padding: "14px 16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              cursor: "pointer",
+            })}
+          >
+            <span style={{ fontWeight: 700, fontSize: 16 }}>{p.codigoNumerico}</span>
+            <span style={{ color: colors.textMuted }}>${p.montoTotal}</span>
+          </div>
+        ))}
+        {pedidos.length === 0 && <p style={{ color: colors.textFaint, fontSize: 14 }}>No hay pagos en efectivo pendientes.</p>}
+      </div>
     </div>
   );
 }

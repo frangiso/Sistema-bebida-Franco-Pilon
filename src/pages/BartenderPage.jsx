@@ -4,10 +4,9 @@ import { db } from "../firebase.js";
 import { useStaffSesion } from "../lib/staffAuth.js";
 import { confirmarEntrega } from "../lib/callables.js";
 import LoginEmail from "../components/LoginEmail.jsx";
+import AppHeader from "../components/AppHeader.jsx";
 import EscanerQR from "../components/EscanerQR.jsx";
-
-const inputStyle = { flex: 1, padding: 10, fontSize: 16, background: "#222", border: "1px solid #444", borderRadius: 8, color: "#fff" };
-const botonSecundario = { background: "none", border: "1px solid #444", color: "#fff", padding: 8, borderRadius: 8 };
+import { colors, radius, boton, card, pageContainer } from "../theme.js";
 
 export default function BartenderPage() {
   const { usuario, cargando, error, login, logout } = useStaffSesion("bartender");
@@ -62,38 +61,39 @@ export default function BartenderPage() {
     }
   }
 
-  if (cargando) return <div style={{ padding: 24, color: "#aaa" }}>Cargando...</div>;
-  if (!usuario) return <LoginEmail titulo="Bartender" onLogin={login} error={error} />;
+  if (cargando) return <div style={pageContainer({ color: colors.textMuted })}>Cargando...</div>;
+  if (!usuario) return <LoginEmail titulo="Bartender" subtitulo="Barra de retiro" onLogin={login} error={error} />;
 
   if (seleccionado) {
     return (
-      <div style={{ padding: 24 }}>
-        <h1 style={{ fontSize: 20 }}>Confirmar entrega</h1>
-        <div style={{ background: "#1a1a1a", padding: 16, borderRadius: 12, marginTop: 16 }}>
-          {seleccionado.items.length === 0 && <p style={{ color: "#888" }}>(detalle no disponible todavía)</p>}
+      <div style={pageContainer()}>
+        <h1 style={{ fontSize: 20, fontWeight: 800 }}>Confirmar entrega</h1>
+        <div style={card({ padding: 20, marginTop: 16 })}>
+          {seleccionado.items.length === 0 && <p style={{ color: colors.textMuted }}>(detalle no disponible todavía)</p>}
           {seleccionado.items.map((item) => (
-            <p key={item.productoId} style={{ fontSize: 20 }}>
+            <p key={item.productoId} style={{ fontSize: 17, fontWeight: 600, margin: "6px 0" }}>
               {item.cantidad}x {item.nombre}
             </p>
           ))}
-          <p style={{ fontSize: 32, fontWeight: 700, marginTop: 12 }}>
+          <p style={{ fontSize: 30, fontWeight: 800, marginTop: 12, color: colors.accentAlt }}>
             {seleccionado.montoTotal != null ? `$${seleccionado.montoTotal}` : ""}
           </p>
         </div>
-        {errorAccion && <p style={{ color: "#f66" }}>{errorAccion}</p>}
-        <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <button
-            onClick={() => setSeleccionado(null)}
-            style={{ flex: 1, padding: 14, borderRadius: 8, background: "#333", color: "#fff", border: "none" }}
-          >
+        {errorAccion && (
+          <p style={{ color: colors.danger, background: colors.dangerBg, padding: 12, borderRadius: radius.sm, marginTop: 12 }}>
+            {errorAccion}
+          </p>
+        )}
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button onClick={() => setSeleccionado(null)} style={boton("secondary", { flex: 1, padding: 16 })}>
             Cancelar
           </button>
           <button
             disabled={confirmando}
             onClick={confirmar}
-            style={{ flex: 1, padding: 14, borderRadius: 8, background: confirmando ? "#333" : "#2d7", color: "#fff", border: "none" }}
+            style={boton(confirmando ? "disabled" : "success", { flex: 1, padding: 16, fontSize: 16 })}
           >
-            {confirmando ? "Confirmando..." : "Confirmar"}
+            {confirmando ? "Confirmando..." : "✓ Confirmar"}
           </button>
         </div>
       </div>
@@ -101,32 +101,76 @@ export default function BartenderPage() {
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: 20 }}>Barra de retiro</h1>
-        <button onClick={logout} style={{ background: "none", border: "none", color: "#888" }}>
-          Salir
-        </button>
-      </div>
+    <div style={pageContainer({ maxWidth: 560 })}>
+      <AppHeader titulo="🍹 Barra de retiro" subtitulo={usuario.nombre} onLogout={logout} />
 
-      <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
-        <input placeholder="Código de 6 dígitos" value={codigoInput} onChange={(e) => setCodigoInput(e.target.value)} style={inputStyle} />
-        <button onClick={buscarPorCodigo} style={{ padding: "0 16px", borderRadius: 8, background: "#2d7", border: "none", color: "#fff" }}>
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          placeholder="Código de 6 dígitos"
+          value={codigoInput}
+          onChange={(e) => setCodigoInput(e.target.value)}
+          style={{
+            flex: 1,
+            padding: 14,
+            fontSize: 16,
+            background: colors.surface,
+            border: `1px solid ${colors.surfaceBorder}`,
+            borderRadius: radius.sm,
+            color: colors.text,
+          }}
+        />
+        <button onClick={buscarPorCodigo} style={boton("primary", { padding: "0 20px" })}>
           Buscar
         </button>
       </div>
-      <button onClick={() => setMostrarCamara((v) => !v)} style={{ ...botonSecundario, marginTop: 8 }}>
-        {mostrarCamara ? "Cerrar cámara" : "Escanear QR"}
+      <button onClick={() => setMostrarCamara((v) => !v)} style={boton("secondary", { marginTop: 10, width: "100%" })}>
+        {mostrarCamara ? "Cerrar cámara" : "📷 Escanear QR"}
       </button>
       {mostrarCamara && <EscanerQR onResultado={alEscanear} onCerrar={() => setMostrarCamara(false)} />}
-      {errorAccion && <p style={{ color: "#f66" }}>{errorAccion}</p>}
+      {errorAccion && (
+        <p style={{ color: colors.danger, background: colors.dangerBg, padding: 12, borderRadius: radius.sm, marginTop: 12 }}>
+          {errorAccion}
+        </p>
+      )}
 
-      <h2 style={{ fontSize: 14, color: "#888", marginTop: 24 }}>Cola ({pedidos.length})</h2>
-      {pedidos.map((p) => (
-        <div key={p.id} onClick={() => setSeleccionado(p)} style={{ padding: 12, borderBottom: "1px solid #2a2a2a", cursor: "pointer" }}>
-          <strong>{p.codigoNumerico}</strong> — ${p.montoTotal} {p.estado === "demorado" && <span style={{ color: "#f90" }}>(demorado)</span>}
-        </div>
-      ))}
+      <h2 style={{ fontSize: 12, color: colors.textMuted, textTransform: "uppercase", letterSpacing: 1, marginTop: 28, marginBottom: 10 }}>
+        Cola ({pedidos.length})
+      </h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {pedidos.map((p) => (
+          <div
+            key={p.id}
+            onClick={() => setSeleccionado(p)}
+            style={card({
+              padding: "14px 16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              cursor: "pointer",
+            })}
+          >
+            <span style={{ fontWeight: 700, fontSize: 16 }}>{p.codigoNumerico}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ color: colors.textMuted }}>${p.montoTotal}</span>
+              {p.estado === "demorado" && (
+                <span
+                  style={{
+                    background: colors.warningBg,
+                    color: colors.warning,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "4px 10px",
+                    borderRadius: radius.pill,
+                  }}
+                >
+                  demorado
+                </span>
+              )}
+            </span>
+          </div>
+        ))}
+        {pedidos.length === 0 && <p style={{ color: colors.textFaint, fontSize: 14 }}>No hay pedidos esperando retiro.</p>}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { collection, query, where, getDocs, documentId } from "firebase/firestore";
 import { db } from "../../firebase.js";
-
-const inputStyle = { padding: 10, fontSize: 15, background: "#222", border: "1px solid #444", borderRadius: 8, color: "#fff" };
+import { colors, boton, input, card } from "../../theme.js";
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10);
@@ -36,29 +35,33 @@ export default function PanelHistorico() {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
-        <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} style={inputStyle} />
-        <span style={{ color: "#888" }}>a</span>
-        <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} style={inputStyle} />
-        <button onClick={buscar} style={{ padding: "10px 16px", background: "#2d7", border: "none", borderRadius: 8, color: "#fff" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
+        <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} style={input({ width: "auto" })} />
+        <span style={{ color: colors.textMuted }}>a</span>
+        <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} style={input({ width: "auto" })} />
+        <button onClick={buscar} style={boton(cargando ? "disabled" : "primary")}>
           {cargando ? "Buscando..." : "Buscar"}
         </button>
       </div>
 
       {dias.length > 0 && (
-        <p style={{ marginBottom: 16 }}>
-          Total período: <strong>${totalPeriodo}</strong> en {pedidosPeriodo} pedidos
-        </p>
+        <div style={card({ padding: 16, marginBottom: 16 })}>
+          <p>
+            Total período: <strong style={{ color: colors.accentAlt }}>${totalPeriodo}</strong> en {pedidosPeriodo} pedidos
+          </p>
+        </div>
       )}
 
-      {dias.map((d) => (
-        <div key={d.fecha} style={{ display: "flex", justifyContent: "space-between", padding: 10, borderBottom: "1px solid #2a2a2a" }}>
-          <span>{d.fecha}</span>
-          <span>
-            ${d.totalFacturado} — {d.cantidadPedidos} pedidos
-          </span>
-        </div>
-      ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {dias.map((d) => (
+          <div key={d.fecha} style={card({ display: "flex", justifyContent: "space-between", padding: "12px 16px" })}>
+            <span>{d.fecha}</span>
+            <span style={{ color: colors.textMuted }}>
+              ${d.totalFacturado} — {d.cantidadPedidos} pedidos
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
