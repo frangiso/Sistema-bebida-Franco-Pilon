@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { asegurarSesionCliente } from "../firebase.js";
-import { crearPedido, iniciarPagoMercadoPago } from "../lib/callables.js";
+import { crearPedido } from "../lib/callables.js";
 import Catalogo from "./cliente/Catalogo.jsx";
 import PantallaCodigo from "./cliente/PantallaCodigo.jsx";
 import Bienvenida from "./cliente/Bienvenida.jsx";
@@ -46,11 +46,8 @@ export default function ClientePage() {
       const { data } = await crearPedido({ items, metodoPago, idempotencyKey: idempotencyKeyRef.current });
       localStorage.setItem(STORAGE_KEY, data.pedidoId);
       setPedidoId(data.pedidoId);
-
-      if (metodoPago === "mercadoPago") {
-        const { data: pago } = await iniciarPagoMercadoPago({ pedidoId: data.pedidoId });
-        window.location.href = pago.initPoint;
-      }
+      // El link/QR de pago (Mercado Pago o tarjeta) se genera en PantallaCodigo,
+      // así funciona igual si el cliente recarga la página o vuelve más tarde.
     } catch (err) {
       setErrorEnvio(err.message || "No se pudo generar el pedido, probá de nuevo.");
     } finally {

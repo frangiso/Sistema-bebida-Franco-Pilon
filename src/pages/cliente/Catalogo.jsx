@@ -160,7 +160,7 @@ export default function Catalogo({ onConfirmar, enviando, onVolver }) {
                 💵 Efectivo
               </button>
               <button style={chipMetodo(metodoPago === "mercadoPago")} onClick={() => setMetodoPago("mercadoPago")}>
-                💳 Mercado Pago
+                💳 MP / Tarjeta
               </button>
             </div>
             <button
