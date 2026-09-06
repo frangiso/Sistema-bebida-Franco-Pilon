@@ -38,7 +38,7 @@ function chipMetodo(activo) {
   };
 }
 
-export default function Catalogo({ onConfirmar, enviando }) {
+export default function Catalogo({ onConfirmar, enviando, onVolver }) {
   const productos = useCatalogo();
   const [cantidades, setCantidades] = useState({});
   const [metodoPago, setMetodoPago] = useState("efectivo");
@@ -64,6 +64,23 @@ export default function Catalogo({ onConfirmar, enviando }) {
 
   return (
     <div style={pageContainer({ paddingBottom: items.length > 0 ? 210 : 40 })}>
+      {onVolver && (
+        <button
+          onClick={onVolver}
+          style={{
+            background: "none",
+            border: "none",
+            color: colors.textMuted,
+            fontSize: 13,
+            fontWeight: 600,
+            padding: 0,
+            marginBottom: 16,
+            cursor: "pointer",
+          }}
+        >
+          ← Volver
+        </button>
+      )}
       <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: -0.4 }}>🍸 Pedí tu trago</h1>
       <p style={{ color: colors.textMuted, fontSize: 14, marginTop: 4, marginBottom: 24 }}>
         Elegí, confirmá y retirá sin hacer fila.

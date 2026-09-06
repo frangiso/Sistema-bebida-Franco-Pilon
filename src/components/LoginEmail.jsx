@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { colors, radius, shadow, boton, input, card } from "../theme.js";
 
 export default function LoginEmail({ titulo, subtitulo, onLogin, error }) {
@@ -28,6 +29,21 @@ export default function LoginEmail({ titulo, subtitulo, onLogin, error }) {
       }}
     >
       <div style={{ width: "100%", maxWidth: 380 }}>
+        <Link
+          to="/"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            color: colors.textMuted,
+            textDecoration: "none",
+            fontSize: 13,
+            fontWeight: 600,
+            marginBottom: 16,
+          }}
+        >
+          ← Volver al inicio
+        </Link>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div
             style={{

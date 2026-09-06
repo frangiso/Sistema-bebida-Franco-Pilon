@@ -79,7 +79,7 @@ export default function ClientePage() {
 
   return (
     <div>
-      <Catalogo onConfirmar={confirmarPedido} enviando={enviando} />
+      <Catalogo onConfirmar={confirmarPedido} enviando={enviando} onVolver={() => setModo("inicio")} />
       {errorEnvio && <p style={{ color: colors.danger, padding: "0 20px" }}>{errorEnvio}</p>}
     </div>
   );
