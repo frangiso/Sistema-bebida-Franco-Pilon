@@ -38,7 +38,7 @@ function chipMetodo(activo) {
   };
 }
 
-export default function Catalogo({ onConfirmar, enviando, onVolver }) {
+export default function Catalogo({ onConfirmar, enviando, onVolver, error }) {
   const productos = useCatalogo();
   const [cantidades, setCantidades] = useState({});
   const [metodoPago, setMetodoPago] = useState("efectivo");
@@ -152,6 +152,20 @@ export default function Catalogo({ onConfirmar, enviando, onVolver }) {
           }}
         >
           <div style={{ maxWidth: 480, margin: "0 auto" }}>
+            {error && (
+              <p
+                style={{
+                  color: colors.danger,
+                  background: colors.dangerBg,
+                  borderRadius: radius.sm,
+                  padding: "10px 12px",
+                  fontSize: 13,
+                  marginBottom: 12,
+                }}
+              >
+                {error}
+              </p>
+            )}
             <p style={{ fontSize: 20, fontWeight: 800, marginBottom: 10 }}>
               Total: <span style={{ color: colors.accentAlt }}>${total}</span>
             </p>
