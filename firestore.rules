@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function estaLogueado() {
+      return request.auth != null;
+    }
+
+    function tieneRol(rol) {
+      return estaLogueado() && request.auth.token.rol == rol;
+    }
+
+    function esAdmin() {
+      return tieneRol('admin');
+    }
+
+    function esStaff() {
+      return tieneRol('bartender') || tieneRol('cajero') || esAdmin();
+    }
+
+    // Catálogo: lectura pública, escritura solo admin (vía panel o Cloud Function)
+    match /productos/{productoId} {
+      allow read: if true;
+      allow write: if esAdmin();
+    }
+
+    // Pedidos: el cliente solo lee el suyo (por clienteId == su uid, login anónimo).
+    // Staff (bartender/cajero/admin) puede leer/listar para sus paneles.
+    // Ninguna escritura directa desde el cliente: todo pasa por Cloud Functions
+    // (Admin SDK), que ignoran estas reglas.
+    match /pedidos/{pedidoId} {
+      allow get: if esStaff() || (estaLogueado() && resource.data.clienteId == request.auth.uid);
+      allow list: if esStaff();
+      allow create, update, delete: if false;
+    }
+
+    // Staff: cada usuario puede leer su propio perfil, admin gestiona todo.
+    // El PIN se maneja hasheado y solo se verifica desde Cloud Functions.
+    match /usuarios/{usuarioId} {
+      allow get: if esAdmin() || (estaLogueado() && request.auth.uid == usuarioId);
+      allow list: if esAdmin();
+      allow write: if esAdmin();
+    }
+
+    // Config general: nunca expuesta al cliente, solo lectura de admin en panel.
+    // El mercadoPagoAccessToken vive aparte, solo accesible desde Cloud Functions.
+    match /config/{docId} {
+      allow read: if esAdmin();
+      allow write: if false;
+    }
+
+    // Agregados de ventas: solo el dueño/admin los consulta, los escribe la Cloud Function.
+    match /ventasDiarias/{fechaISO} {
+      allow read: if esAdmin();
+      allow write: if false;
+    }
+  }
+}
