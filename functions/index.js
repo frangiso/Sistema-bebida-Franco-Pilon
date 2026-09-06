@@ -7,6 +7,9 @@ const { loginStaff } = require("./src/loginStaff");
 const { sincronizarRolStaff } = require("./src/sincronizarRolStaff");
 const { iniciarPagoMercadoPago } = require("./src/iniciarPagoMercadoPago");
 const { verificarPagoPedido } = require("./src/verificarPagoPedido");
+const { crearUsuarioStaff } = require("./src/crearUsuarioStaff");
+const { cambiarPinStaff } = require("./src/cambiarPinStaff");
+const { eliminarUsuarioStaff } = require("./src/eliminarUsuarioStaff");
 
 module.exports = {
   crearPedido,
@@ -18,4 +21,7 @@ module.exports = {
   sincronizarRolStaff,
   iniciarPagoMercadoPago,
   verificarPagoPedido,
+  crearUsuarioStaff,
+  cambiarPinStaff,
+  eliminarUsuarioStaff,
 };

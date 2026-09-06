@@ -4,11 +4,13 @@ import LoginEmail from "../components/LoginEmail.jsx";
 import PanelVivo from "./admin/PanelVivo.jsx";
 import PanelHistorico from "./admin/PanelHistorico.jsx";
 import PanelCatalogo from "./admin/PanelCatalogo.jsx";
+import PanelStaff from "./admin/PanelStaff.jsx";
 
 const TABS = [
   { id: "vivo", label: "En vivo" },
   { id: "historico", label: "Histórico" },
   { id: "catalogo", label: "Catálogo" },
+  { id: "staff", label: "Staff" },
 ];
 
 export default function AdminPage() {
@@ -48,6 +50,7 @@ export default function AdminPage() {
       {tab === "vivo" && <PanelVivo />}
       {tab === "historico" && <PanelHistorico />}
       {tab === "catalogo" && <PanelCatalogo />}
+      {tab === "staff" && <PanelStaff adminUid={usuario.uid} />}
     </div>
   );
 }
