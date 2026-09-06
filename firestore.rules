@@ -11,8 +11,13 @@ service cloud.firestore {
       return estaLogueado() && request.auth.token.rol == rol;
     }
 
+    // El admin se valida leyendo su propio documento en usuarios/{uid} (no
+    // depende de un custom claim, que solo se setea vía Cloud Function).
+    // Bartender/cajero sí siguen usando el claim porque se loguean con PIN.
     function esAdmin() {
-      return tieneRol('admin');
+      return estaLogueado() &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin' &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.activo == true;
     }
 
     function esStaff() {

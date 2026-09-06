@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth } from "../firebase.js";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase.js";
+
+/**
+ * A diferencia de bartender/cajero (que se loguean con PIN vía Cloud Function
+ * y quedan con el rol en un custom claim), el admin se valida leyendo directo
+ * su documento en usuarios/{uid}. Así no depende de que las Cloud Functions
+ * estén desplegadas para poder entrar al panel.
+ */
+async function esAdminValido(uid) {
+  const snap = await getDoc(doc(db, "usuarios", uid));
+  return snap.exists() && snap.data().rol === "admin" && snap.data().activo === true;
+}
 
 /** Sesión del dueño/admin: login estándar de Firebase Auth (email/password). */
 export function useAdminSesion() {
@@ -15,8 +27,8 @@ export function useAdminSesion() {
         setCargando(false);
         return;
       }
-      const tokenResult = await firebaseUser.getIdTokenResult();
-      if (tokenResult.claims.rol !== "admin") {
+      const esAdmin = await esAdminValido(firebaseUser.uid);
+      if (!esAdmin) {
         setUsuario(null);
         setCargando(false);
         return;
@@ -31,10 +43,8 @@ export function useAdminSesion() {
     setError(null);
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      // Forzamos refresh por si el claim "rol" recién se sincronizó ahora
-      // (primer login de esta cuenta después de que el admin la dio de alta).
-      const tokenResult = await cred.user.getIdTokenResult(true);
-      if (tokenResult.claims.rol !== "admin") {
+      const esAdmin = await esAdminValido(cred.user.uid);
+      if (!esAdmin) {
         setError("Esta cuenta no tiene permisos de administrador.");
         await signOut(auth);
         return;
