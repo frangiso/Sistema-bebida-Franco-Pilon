@@ -5,6 +5,8 @@ const { webhookMercadoPago } = require("./src/webhookMercadoPago");
 const { limpiarCodigosVencidos } = require("./src/limpiarCodigosVencidos");
 const { loginStaff } = require("./src/loginStaff");
 const { sincronizarRolStaff } = require("./src/sincronizarRolStaff");
+const { iniciarPagoMercadoPago } = require("./src/iniciarPagoMercadoPago");
+const { verificarPagoPedido } = require("./src/verificarPagoPedido");
 
 module.exports = {
   crearPedido,
@@ -14,4 +16,6 @@ module.exports = {
   limpiarCodigosVencidos,
   loginStaff,
   sincronizarRolStaff,
+  iniciarPagoMercadoPago,
+  verificarPagoPedido,
 };

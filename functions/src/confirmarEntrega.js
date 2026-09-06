@@ -16,28 +16,47 @@ exports.confirmarEntrega = onCall({ region: REGION }, async (request) => {
     throw new HttpsError("permission-denied", "Solo bartenders pueden confirmar entregas.");
   }
 
-  const { codigoNumerico } = data || {};
-  if (!codigoNumerico || typeof codigoNumerico !== "string") {
-    throw new HttpsError("invalid-argument", "Falta codigoNumerico.");
+  // El bartender llega acá de dos formas: escaneando el QR (que trae el
+  // pedidoId directo, más rápido y sin ambigüedad) o tipeando el código
+  // numérico de respaldo cuando el wifi/cámara falla.
+  const { codigoNumerico, pedidoId } = data || {};
+  if (!codigoNumerico && !pedidoId) {
+    throw new HttpsError("invalid-argument", "Falta codigoNumerico o pedidoId.");
   }
 
   const resultado = await db.runTransaction(async (transaction) => {
-    // Un mismo codigoNumerico puede haber sido reutilizado por pedidos viejos ya
-    // entregados/cancelados (solo se garantiza único entre los "activos"), así que
-    // filtramos por los únicos estados en que tiene sentido entregar.
-    const query = db
-      .collection("pedidos")
-      .where("codigoNumerico", "==", codigoNumerico)
-      .where("estado", "in", ["pendienteRetiro", "demorado"])
-      .limit(1);
-    const snap = await transaction.get(query);
+    let pedidoDoc;
 
-    if (snap.empty) {
-      throw new HttpsError("not-found", "Código no encontrado o ya entregado.");
+    if (pedidoId) {
+      const snap = await transaction.get(db.collection("pedidos").doc(pedidoId));
+      if (!snap.exists) {
+        throw new HttpsError("not-found", "Pedido no encontrado.");
+      }
+      pedidoDoc = snap;
+    } else {
+      // Un mismo codigoNumerico puede haber sido reutilizado por pedidos viejos ya
+      // entregados/cancelados (solo se garantiza único entre los "activos"), así que
+      // filtramos por los únicos estados en que tiene sentido entregar.
+      const query = db
+        .collection("pedidos")
+        .where("codigoNumerico", "==", codigoNumerico)
+        .where("estado", "in", ["pendienteRetiro", "demorado"])
+        .limit(1);
+      const snap = await transaction.get(query);
+      if (snap.empty) {
+        throw new HttpsError("not-found", "Código no encontrado o ya entregado.");
+      }
+      pedidoDoc = snap.docs[0];
     }
 
-    const pedidoDoc = snap.docs[0];
     const pedido = pedidoDoc.data();
+
+    if (pedido.estado === "entregado") {
+      throw new HttpsError("failed-precondition", "Este pedido ya fue entregado.");
+    }
+    if (pedido.estado !== "pendienteRetiro" && pedido.estado !== "demorado") {
+      throw new HttpsError("failed-precondition", `El pedido está en estado "${pedido.estado}", no se puede entregar.`);
+    }
 
     transaction.update(pedidoDoc.ref, {
       estado: "entregado",

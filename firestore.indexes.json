@@ -24,6 +24,14 @@
         { "fieldPath": "estado", "order": "ASCENDING" },
         { "fieldPath": "pagadoEn", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "productos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "activo", "order": "ASCENDING" },
+        { "fieldPath": "orden", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
