@@ -3,7 +3,7 @@ import { collection, query, where, orderBy, onSnapshot } from "firebase/firestor
 import { db } from "../firebase.js";
 import { useStaffSesion } from "../lib/staffAuth.js";
 import { confirmarPagoEfectivo } from "../lib/callables.js";
-import LoginPin from "../components/LoginPin.jsx";
+import LoginEmail from "../components/LoginEmail.jsx";
 
 export default function CajeroPage() {
   const { usuario, cargando, error, login, logout } = useStaffSesion("cajero");
@@ -41,7 +41,7 @@ export default function CajeroPage() {
   }
 
   if (cargando) return <div style={{ padding: 24, color: "#aaa" }}>Cargando...</div>;
-  if (!usuario) return <LoginPin titulo="Caja" onLogin={login} error={error} />;
+  if (!usuario) return <LoginEmail titulo="Caja" onLogin={login} error={error} />;
 
   if (seleccionado) {
     return (

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { collection, doc, updateDoc, onSnapshot, orderBy, query } from "firebase/firestore";
-import { db } from "../../firebase.js";
-import { crearUsuarioStaff, cambiarPinStaff, eliminarUsuarioStaff } from "../../lib/callables.js";
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth";
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query, setDoc, updateDoc } from "firebase/firestore";
+import { auth, authSecundario, db } from "../../firebase.js";
 
 const ROLES = ["bartender", "cajero"];
 
 const inputStyle = { padding: 8, fontSize: 14, background: "#222", border: "1px solid #444", borderRadius: 6, color: "#fff" };
-const vacio = { nombre: "", usuario: "", pin: "", rol: ROLES[0] };
+const vacio = { nombre: "", email: "", password: "", rol: ROLES[0] };
 
 export default function PanelStaff({ adminUid }) {
   const [usuarios, setUsuarios] = useState([]);
@@ -25,13 +25,22 @@ export default function PanelStaff({ adminUid }) {
   async function agregarUsuario(e) {
     e.preventDefault();
     setError(null);
-    if (!nuevo.nombre || !nuevo.usuario || !nuevo.pin) return;
+    if (!nuevo.nombre || !nuevo.email || !nuevo.password) return;
     setGuardando(true);
     try {
-      await crearUsuarioStaff(nuevo);
+      // Se crea con una instancia de Auth aparte para que no reemplace la
+      // sesión del admin logueado en esta pestaña.
+      const cred = await createUserWithEmailAndPassword(authSecundario, nuevo.email, nuevo.password);
+      await setDoc(doc(db, "usuarios", cred.user.uid), {
+        nombre: nuevo.nombre,
+        email: nuevo.email,
+        rol: nuevo.rol,
+        activo: true,
+      });
+      await signOut(authSecundario);
       setNuevo(vacio);
     } catch (err) {
-      setError(err.message || "No se pudo crear el usuario.");
+      setError(traducirError(err));
     } finally {
       setGuardando(false);
     }
@@ -41,22 +50,24 @@ export default function PanelStaff({ adminUid }) {
     updateDoc(doc(db, "usuarios", usuarioId), { activo: !activo });
   }
 
-  async function cambiarPin(usuarioId) {
-    const pin = prompt("Nuevo PIN (4 a 6 dígitos):");
-    if (!pin) return;
+  async function restablecerContrasena(email) {
     try {
-      await cambiarPinStaff({ usuarioId, pin });
+      await sendPasswordResetEmail(auth, email);
+      alert(`Le mandamos un mail a ${email} para que elija una contraseña nueva.`);
     } catch (err) {
-      alert(err.message || "No se pudo cambiar el PIN.");
+      alert(traducirError(err));
     }
   }
 
   async function eliminar(usuarioId, nombre) {
     if (!confirm(`¿Eliminar a ${nombre}? No va a poder volver a loguearse.`)) return;
     try {
-      await eliminarUsuarioStaff({ usuarioId });
+      // Solo borra el documento (revoca el acceso al instante). La cuenta de
+      // Auth queda huérfana pero inofensiva: sin documento no pasa el chequeo
+      // de rol en ningún panel ni en las reglas de Firestore.
+      await deleteDoc(doc(db, "usuarios", usuarioId));
     } catch (err) {
-      alert(err.message || "No se pudo eliminar el usuario.");
+      alert(traducirError(err));
     }
   }
 
@@ -65,17 +76,18 @@ export default function PanelStaff({ adminUid }) {
       <form onSubmit={agregarUsuario} style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
         <input placeholder="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} style={inputStyle} />
         <input
-          placeholder="Usuario (login)"
-          value={nuevo.usuario}
-          onChange={(e) => setNuevo({ ...nuevo, usuario: e.target.value })}
+          placeholder="Email"
+          type="email"
+          value={nuevo.email}
+          onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })}
           style={inputStyle}
         />
         <input
-          placeholder="PIN (4-6 dígitos)"
-          inputMode="numeric"
-          value={nuevo.pin}
-          onChange={(e) => setNuevo({ ...nuevo, pin: e.target.value })}
-          style={{ ...inputStyle, width: 130 }}
+          placeholder="Contraseña"
+          type="password"
+          value={nuevo.password}
+          onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })}
+          style={inputStyle}
         />
         <select value={nuevo.rol} onChange={(e) => setNuevo({ ...nuevo, rol: e.target.value })} style={inputStyle}>
           {ROLES.map((r) => (
@@ -93,7 +105,7 @@ export default function PanelStaff({ adminUid }) {
       {usuarios.map((u) => (
         <div key={u.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: 8, borderBottom: "1px solid #2a2a2a" }}>
           <span style={{ flex: 1, opacity: u.activo ? 1 : 0.4 }}>
-            {u.nombre} <span style={{ color: "#888", fontSize: 12 }}>@{u.usuario} — {u.rol}</span>
+            {u.nombre} <span style={{ color: "#888", fontSize: 12 }}>{u.email} — {u.rol}</span>
           </span>
           {u.rol !== "admin" && (
             <>
@@ -103,8 +115,8 @@ export default function PanelStaff({ adminUid }) {
               >
                 {u.activo ? "Activo" : "Inactivo"}
               </button>
-              <button onClick={() => cambiarPin(u.id)} style={{ padding: "6px 10px", background: "#448", border: "none", borderRadius: 6, color: "#fff" }}>
-                Cambiar PIN
+              <button onClick={() => restablecerContrasena(u.email)} style={{ padding: "6px 10px", background: "#448", border: "none", borderRadius: 6, color: "#fff" }}>
+                Restablecer contraseña
               </button>
             </>
           )}
@@ -117,4 +129,12 @@ export default function PanelStaff({ adminUid }) {
       ))}
     </div>
   );
+}
+
+function traducirError(err) {
+  const codigo = err?.code || "";
+  if (codigo === "auth/email-already-in-use") return "Ya existe una cuenta con ese email.";
+  if (codigo === "auth/weak-password") return "La contraseña tiene que tener al menos 6 caracteres.";
+  if (codigo === "auth/invalid-email") return "El email no es válido.";
+  return err?.message || "No se pudo completar la operación.";
 }

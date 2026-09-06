@@ -7,21 +7,25 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function tieneRol(rol) {
-      return estaLogueado() && request.auth.token.rol == rol;
+    // Todos los roles (admin, bartender, cajero) se validan leyendo el
+    // documento propio en usuarios/{uid} — nada depende de custom claims ni
+    // de que las Cloud Functions estén desplegadas. El admin crea las cuentas
+    // de staff con email+contraseña desde el panel y las da de baja poniendo
+    // activo=false (o borrando el documento).
+    function miDoc() {
+      return get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data;
     }
 
-    // El admin se valida leyendo su propio documento en usuarios/{uid} (no
-    // depende de un custom claim, que solo se setea vía Cloud Function).
-    // Bartender/cajero sí siguen usando el claim porque se loguean con PIN.
+    function tieneRolActivo(rol) {
+      return estaLogueado() && miDoc().rol == rol && miDoc().activo == true;
+    }
+
     function esAdmin() {
-      return estaLogueado() &&
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin' &&
-        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.activo == true;
+      return tieneRolActivo('admin');
     }
 
     function esStaff() {
-      return tieneRol('bartender') || tieneRol('cajero') || esAdmin();
+      return tieneRolActivo('bartender') || tieneRolActivo('cajero') || esAdmin();
     }
 
     // Catálogo: lectura pública, escritura solo admin (vía panel o Cloud Function)
@@ -40,8 +44,8 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // Staff: cada usuario puede leer su propio perfil, admin gestiona todo.
-    // El PIN se maneja hasheado y solo se verifica desde Cloud Functions.
+    // Staff: cada usuario puede leer su propio perfil, admin gestiona todo
+    // (alta con email+contraseña, baja/reactivación, eliminación).
     match /usuarios/{usuarioId} {
       allow get: if esAdmin() || (estaLogueado() && request.auth.uid == usuarioId);
       allow list: if esAdmin();

@@ -17,6 +17,12 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app, "southamerica-east1");
 
+// App secundaria, solo para que el admin pueda crear cuentas de Auth para
+// bartender/cajero (createUserWithEmailAndPassword) sin que eso pise su
+// propia sesión logueada (por eso no comparte la instancia de `auth`).
+const appSecundaria = initializeApp(firebaseConfig, "secundaria");
+export const authSecundario = getAuth(appSecundaria);
+
 // Login liviano para clientes: no piden usuario/contraseña, solo necesitan
 // un uid estable para que las reglas de Firestore les dejen leer su propio pedido.
 export function asegurarSesionCliente() {

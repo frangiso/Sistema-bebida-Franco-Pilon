@@ -3,7 +3,7 @@ import { collection, query, where, orderBy, onSnapshot } from "firebase/firestor
 import { db } from "../firebase.js";
 import { useStaffSesion } from "../lib/staffAuth.js";
 import { confirmarEntrega } from "../lib/callables.js";
-import LoginPin from "../components/LoginPin.jsx";
+import LoginEmail from "../components/LoginEmail.jsx";
 import EscanerQR from "../components/EscanerQR.jsx";
 
 const inputStyle = { flex: 1, padding: 10, fontSize: 16, background: "#222", border: "1px solid #444", borderRadius: 8, color: "#fff" };
@@ -63,7 +63,7 @@ export default function BartenderPage() {
   }
 
   if (cargando) return <div style={{ padding: 24, color: "#aaa" }}>Cargando...</div>;
-  if (!usuario) return <LoginPin titulo="Bartender" onLogin={login} error={error} />;
+  if (!usuario) return <LoginEmail titulo="Bartender" onLogin={login} error={error} />;
 
   if (seleccionado) {
     return (
